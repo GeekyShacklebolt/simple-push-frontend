@@ -1,9 +1,16 @@
 registerServiceWorker()
 
 const notificationForm = document.getElementById('notificationForm')
+const subscribeButton = document.getElementById('subscribeButton')
+
 notificationForm.addEventListener('submit', function(event){
     event.preventDefault();
     createNotification();
+});
+
+subscribeButton.addEventListener('click', function(event){
+    event.preventDefault();
+    requestNotificationPermission();
 });
 
 function createNotification(){
@@ -43,4 +50,19 @@ function registerServiceWorker() {
     } else {
         console.error('The browser does not support service workers or push messages.');
     }
+}
+
+function requestNotificationPermission() {
+    return new Promise(function (resolve, reject) {
+        const permissionResult = Notification.requestPermission(function (result) {
+            resolve(result);
+        });
+        if (permissionResult) {
+            permissionResult.then(resolve, reject);
+        }
+    }).then(function (permissionResult) {
+        if (permissionResult !== 'granted') {
+            throw new Error("We weren't granted permission.");
+        }
+    });
 }
