@@ -41,23 +41,22 @@ function urlBase64ToUint8Array(base64String) {
 
 // Event Listeners
 subscribeButton.addEventListener('click', function(event){
-    event.preventDefault();
-    requestNotificationPermission()
+    event.preventDefault()
+    let result = requestNotificationPermission()
+    console.log(result)
 });
 
 notificationForm.addEventListener('submit', function(event){
-    event.preventDefault();
-    createNewNotification(notificationForm)
-    .then(function(result) {
-        console.log(result)
-    }).catch((error) => logError(error));
+    event.preventDefault()
+    let result = saveNotification(notificationForm)
+    console.log(result)
 });
 
 
 // Core Functions
-function createNewNotification(notificationForm){
+function saveNotification(notificationForm){
     const formInputs = notificationForm.elements
-    let url = getBaseUrl() + '/notifications'
+    let url = getBaseUrl() + '/api/notifications'
     let body = JSON.stringify({
         title: formInputs['title'].value,
         description: formInputs['description'].value,
@@ -112,7 +111,7 @@ function executeUserSubscriptionFlow() {
         return subscribeUserToPushNotification(registration)
     }).then(function (pushSubscription) {
         console.log('Received PushSubscription: ', JSON.stringify(pushSubscription));
-        console.log("TODO: Send push subscription details to Backend.")
+        return savePushSubscription(pushSubscription)
     }).catch((error) => logError(error))
 }
 
@@ -122,4 +121,21 @@ function subscribeUserToPushNotification(registration) {
         applicationServerKey: urlBase64ToUint8Array(getServerPublicKey()),
     };
     return registration.pushManager.subscribe(subscribeOptions);
+}
+
+function savePushSubscription(pushSubscription) {
+    const subscription = pushSubscription.toJSON()
+    let url = getBaseUrl() + '/api/subscriptions'
+    let body = JSON.stringify({
+        push_service_url:subscription["endpoint"],
+        subscription_public_key:subscription["keys"]["p256dh"],
+        subscription_auth:subscription["keys"]["auth"],
+    })
+    let headers = {
+        'Content-type': 'application/json; charset=UTF-8',
+    }
+    return makeHttpRequest('POST', url, body, headers)
+        .then(function (responseJson) {
+            return responseJson
+        }).catch(error => console.error('Error: ', error))
 }
