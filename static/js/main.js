@@ -15,7 +15,7 @@ function makeHttpRequest(method, url, body, headers) {
         method: method,
         body: body,
         headers: headers,
-    }).then(function(response){
+    }).then((response) => {
         return response.json()
     }).catch((error) => logError(error));
 }
@@ -65,20 +65,24 @@ function saveNotification(notificationForm){
         'Content-type': 'application/json; charset=UTF-8',
     }
     return makeHttpRequest('POST', url, body, headers)
-    .then(function (responseJson) {
+    .then((responseJson) => {
         notificationForm.reset()
         return responseJson
     }).catch(error => console.error('Error: ', error))
 }
 
+function is_push_notification_supported() {
+    return 'serviceWorker' in navigator && 'PushManager' in window
+}
+
 function registerServiceWorker() {
     return new Promise(function (resolve, reject) {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.register('./static/js/service-worker.js')
-                .then(function (registration) {
+        if (is_push_notification_supported()) {
+            return navigator.serviceWorker.register('./static/js/service-worker.js')
+                .then((registration) => {
                     console.log('Service worker successfully registered!');
                     return resolve(registration)
-                }).catch(function (err) {
+                }).catch((err) => {
                     console.error('Unable to register service worker.', err);
                     return resolve(err)
                 });
@@ -95,7 +99,7 @@ function requestNotificationPermission() {
         return Notification.permission
     }
     Notification.requestPermission()
-    .then(function (permissionResult) {
+    .then((permissionResult) => {
         if (permissionResult === 'granted') {
             console.log("Notification Permission granted!")
             return executeUserSubscriptionFlow()
@@ -107,9 +111,9 @@ function requestNotificationPermission() {
 
 function executeUserSubscriptionFlow() {
     registerServiceWorker()
-    .then(function (registration) {
+    .then((registration) => {
         return subscribeUserToPushNotification(registration)
-    }).then(function (pushSubscription) {
+    }).then((pushSubscription) => {
         console.log('Received PushSubscription: ', JSON.stringify(pushSubscription));
         return savePushSubscription(pushSubscription)
     }).catch((error) => logError(error))
@@ -128,14 +132,14 @@ function savePushSubscription(pushSubscription) {
     let url = getBaseUrl() + '/api/subscriptions'
     let body = JSON.stringify({
         push_service_url:subscription["endpoint"],
-        subscription_public_key:subscription["keys"]["p256dh"],
-        subscription_auth:subscription["keys"]["auth"],
+        public_key:subscription["keys"]["p256dh"],
+        auth_key:subscription["keys"]["auth"],
     })
     let headers = {
         'Content-type': 'application/json; charset=UTF-8',
     }
     return makeHttpRequest('POST', url, body, headers)
-        .then(function (responseJson) {
+        .then((responseJson) => {
             return responseJson
         }).catch(error => console.error('Error: ', error))
 }
