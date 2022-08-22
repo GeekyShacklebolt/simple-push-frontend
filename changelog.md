@@ -1,3 +1,9 @@
+### 22nd Aug, 2022
+
+* The dropdown can be refreshed to fetch the latest list of notifications available. 
+* Integrated API (`POST /api/notifications/:id/send`) to trigger a specific push notification to all subscribers.
+* Show available notifications from backend on a dropdown to allow user to select which notification to send.
+
 ### 19th Aug, 2022
 
 * Display notification on device using service-worker 

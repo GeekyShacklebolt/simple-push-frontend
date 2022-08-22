@@ -1,5 +1,11 @@
-const notificationForm = document.getElementById('notificationForm')
+const createNotificationForm = document.getElementById('notificationForm')
 const subscribeButton = document.getElementById('subscribeButton')
+const sendNotificationButton = document.getElementById('send-notification-button')
+const refreshNotificationsButton = document.getElementById('refresh-notifications-button')
+const notificationsList = document.getElementById('notifications-list')
+
+// Functions to call on window load
+updateNotificationsList()
 
 // Common Functions
 function getBaseUrl() {
@@ -10,7 +16,7 @@ function logError(error) {
     console.error('Error: ', error)
 }
 
-function makeHttpRequest(method, url, body, headers) {
+function makeHttpRequest(method, url, headers, body) {
     return fetch(url, {
         method: method,
         body: body,
@@ -40,17 +46,29 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 // Event Listeners
-subscribeButton.addEventListener('click', function(event){
+subscribeButton.addEventListener('click', function(event) {
     event.preventDefault()
     let result = requestNotificationPermission()
     console.log(result)
 });
 
-notificationForm.addEventListener('submit', function(event){
+createNotificationForm.addEventListener('submit', function(event) {
     event.preventDefault()
-    let result = saveNotification(notificationForm)
+    let result = saveNotification(createNotificationForm)
     console.log(result)
 });
+
+sendNotificationButton.addEventListener('click', function(event) {
+    event.preventDefault()
+    let selected_notification_id = notificationsList.options[notificationsList.selectedIndex].id;
+    let result = triggerSendingPushNotification(selected_notification_id)
+    console.log(result)
+});
+
+refreshNotificationsButton.addEventListener('click', function(event) {
+    event.preventDefault()
+    updateNotificationsList()
+})
 
 
 // Core Functions
@@ -64,7 +82,7 @@ function saveNotification(notificationForm){
     let headers = {
         'Content-type': 'application/json; charset=UTF-8',
     }
-    return makeHttpRequest('POST', url, body, headers)
+    return makeHttpRequest('POST', url, headers, body)
     .then((responseJson) => {
         notificationForm.reset()
         return responseJson
@@ -96,6 +114,7 @@ function registerServiceWorker() {
 
 function requestNotificationPermission() {
     if (Notification.permission === 'granted') {
+        alert("You are already subscribed!")
         return Notification.permission
     }
     Notification.requestPermission()
@@ -138,7 +157,47 @@ function savePushSubscription(pushSubscription) {
     let headers = {
         'Content-type': 'application/json; charset=UTF-8',
     }
-    return makeHttpRequest('POST', url, body, headers)
+    return makeHttpRequest('POST', url, headers, body)
+        .then((responseJson) => {
+            return responseJson
+        }).catch(error => console.error('Error: ', error))
+}
+
+function triggerSendingPushNotification(notification_id) {
+    let url = getBaseUrl() + '/api/notifications/' + notification_id + "/send"
+    let headers = {
+        'Content-type': 'application/json; charset=UTF-8',
+    }
+    return makeHttpRequest('POST', url, headers)
+        .then((responseJson) => {
+            return responseJson
+        }).catch(error => console.error('Error: ', error))
+}
+
+
+function updateNotificationsList() {
+    notificationsList.innerHTML = ''
+    fetchAllNotifications()
+        .then(data => {
+            data.forEach(notification => render(notification))
+        });
+}
+
+function render(notification) {
+    const option = document.createElement('option')
+    let option_text = notification.title + " | " + notification.description
+    option.id = notification.id
+    const content = document.createTextNode(`${option_text}`)
+    option.appendChild(content)
+    notificationsList.appendChild(option)
+}
+
+function fetchAllNotifications() {
+    let url = getBaseUrl() + '/api/notifications'
+    let headers = {
+        'Content-type': 'application/json; charset=UTF-8',
+    }
+    return makeHttpRequest('GET', url, headers)
         .then((responseJson) => {
             return responseJson
         }).catch(error => console.error('Error: ', error))
