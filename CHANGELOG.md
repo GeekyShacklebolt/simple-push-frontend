@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/GeekyShacklebolt/simple-push-frontend/compare/v0.0.1...v0.0.2) (2023-03-08)
+
+
+### Bug Fixes
+
+* add extra line to keep logical tags to together ([#10](https://github.com/GeekyShacklebolt/simple-push-frontend/issues/10)) ([2c7e5a5](https://github.com/GeekyShacklebolt/simple-push-frontend/commit/2c7e5a5bb7b82dc85e3bc3e6c79792efa1e49a89))
+
 ## 1.0.0 (2023-03-08)
 
 
